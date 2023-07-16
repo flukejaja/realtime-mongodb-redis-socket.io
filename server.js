@@ -11,7 +11,7 @@ const io = socketIO(server);
 const PORT = process.env.PORT || 3000;
 
 io.on('connection', (socket) => {
-    console.log('A client connected.');
+  
     socket.on('get:data', async () => {
       const data = await getDataFromMongoDB();
       socket.emit('data', data);
@@ -22,17 +22,21 @@ io.on('connection', (socket) => {
     });
   });
   
-  async function getDataFromMongoDB() {
-    const data =  dbTest.find({}).toArray(function(err, result) {
-        if (err) throw err;
-        console.log(result);
-        db.close();
-      });
-    redisClient.set('data', JSON.stringify(data));
+  const getDataFromMongoDB = async () => {
+
+    const cached = await getAsync('data:redis');
+
+    if(cached){
+      return JSON.parse(cached);
+    }
+
+    const data = await dbTest.find({}).toArray();
+    redisClient.setEx('data:redis', 60 ,JSON.stringify(data));
+ 
     return data;
   }
 
-  app.get('/', (req, res) => {
+  app.get('/', (_, res) => {
     res.sendFile(__dirname + '/view/index.html');
   });
 

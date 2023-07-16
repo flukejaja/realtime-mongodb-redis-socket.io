@@ -7,7 +7,8 @@ const redisClient = redis.createClient({
     socket: {
         host: process.env.REDIS_HOST,
         port: 19624
-    }
+    },
+    legacyMode: true
 });
 
 redisClient.connect();
